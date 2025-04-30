@@ -1,13 +1,5 @@
 import { useState } from "react";
 
-const donnees = [
-  { rang: 45, voeux: ["Paris", "Créteil", "Versailles"] },
-  { rang: 320, voeux: ["Poitiers", "Bordeaux", "Orléans-Tours"] },
-  { rang: 570, voeux: ["Amiens", "Normandie", "Limoges"] },
-  { rang: 610, voeux: ["Dijon", "Nancy-Metz", "Besançon"] },
-  { rang: 720, voeux: ["Lyon", "Reims", "Strasbourg"] }
-];
-
 const seuils = {
   "Aix-Marseille": 426,
   "Amiens": 571,
@@ -36,46 +28,68 @@ const seuils = {
   "Versailles": 561
 };
 
-export default function SimulationVoeux() {
-  const [simul, setSimul] = useState([]);
+const academies = Object.keys(seuils);
 
-  const lancerSimulation = () => {
-    const resultat = donnees.map(({ rang, voeux }) => {
-      const affectation = voeux.find((v) => rang <= (seuils[v] || 0));
-      return { rang, affectation: affectation || "Aucune" };
-    });
-    setSimul(resultat);
+export default function SimulationVoeux() {
+  const [rang, setRang] = useState(0);
+  const [voeux, setVoeux] = useState(Array(10).fill(""));
+
+  const handleVoeuChange = (index, value) => {
+    const newVoeux = [...voeux];
+    newVoeux[index] = value;
+    setVoeux(newVoeux);
+  };
+
+  const getStatut = (v) => {
+    if (!v) return null;
+    const seuil = seuils[v];
+    if (!seuil) return null;
+    return rang <= seuil ? "✅ Accessible" : "❌ Inaccessible";
+  };
+
+  const getColor = (v) => {
+    if (!v) return "text-gray-400";
+    const seuil = seuils[v];
+    if (!seuil) return "text-gray-400";
+    const tension = seuil <= 250 ? "text-red-600" : seuil <= 500 ? "text-yellow-600" : "text-green-600";
+    return tension;
   };
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold text-indigo-700 mb-4">Simulation à partir des vœux</h2>
-      <p className="mb-4 text-gray-600">Exemple de simulation selon les 3 premiers vœux déclarés et les seuils de fermeture 2024.</p>
-      <button
-        onClick={lancerSimulation}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg mb-6"
-      >
-        Lancer la simulation
-      </button>
+      <h2 className="text-2xl font-bold text-indigo-700 mb-4">Mes vœux d'académies</h2>
+      <p className="text-gray-600 mb-6">Entrez votre rang et sélectionnez jusqu’à 10 académies. Le simulateur indique si chaque vœu est probablement accessible selon les seuils de fermeture 2024.</p>
 
-      {simul.length > 0 && (
-        <table className="table-auto mx-auto border-collapse">
-          <thead>
-            <tr>
-              <th className="border px-4 py-2">Rang</th>
-              <th className="border px-4 py-2">Académie attribuée</th>
-            </tr>
-          </thead>
-          <tbody>
-            {simul.map((s, idx) => (
-              <tr key={idx}>
-                <td className="border px-4 py-2">{s.rang}</td>
-                <td className="border px-4 py-2">{s.affectation}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="mb-6">
+        <label className="font-semibold">Votre rang :</label>
+        <input
+          type="number"
+          value={rang}
+          onChange={(e) => setRang(parseInt(e.target.value) || 0)}
+          className="ml-4 p-2 border rounded w-24"
+        />
+      </div>
+
+      <div className="space-y-4">
+        {voeux.map((voeu, index) => (
+          <div key={index} className="flex items-center gap-4">
+            <label className="w-20">Vœu {index + 1} :</label>
+            <select
+              value={voeu}
+              onChange={(e) => handleVoeuChange(index, e.target.value)}
+              className="border p-2 rounded w-64"
+            >
+              <option value="">-- Choisir une académie --</option>
+              {academies.map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+            {voeu && (
+              <span className={`text-sm font-semibold ${getColor(voeu)}`}>{getStatut(voeu)}</span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
